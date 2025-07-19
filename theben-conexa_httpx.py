@@ -25,6 +25,7 @@ async def main():
 
     # Request the smgw-info
     url = f"http://{ip_address}:{port}/smgw/m2m/"
+    url = f"http://{ip_address}:{port}/smgw/m2m/{username}.sm/json"
 
     body = {"method" : "smgw-info"}
     # JSON-Body serialisieren, um die exakte Größe zu berechnen
