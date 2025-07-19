@@ -6,7 +6,7 @@ Die Datei ``theben-conexa_requests.py`` enthält die Abfragen unter Verwendung d
 
 Die Datei ``theben-conexa_httpx.py`` enthält die Abfragen unter Verwendung der Python Bibliothek ``httpx``.
 
-Die API-Dokumentation findet man in [Schnittstellenbeschreibung IF_GW_CON.pdf](Schnittstellenbeschreibung IF_GW_CON.pdf).
+Die API-Dokumentation findet man in der [Schnittstellenbeschreibung IF_GW_CON.pdf](https://github.com/klacol/smgw-theben-conexa/blob/main/Schnittstellenbeschreibung%20IF_GW_CON.pdf).
 
 Zum Laden der Zugangsdaten bitte eine Dazein ``.env`` anlegen und wie folgt befüllen:
 
@@ -18,4 +18,3 @@ CONEXA_PASSWORD=
 ```
 
 Und dann mit Python ausführen.
-
