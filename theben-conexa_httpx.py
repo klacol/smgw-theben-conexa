@@ -3,13 +3,18 @@ import os
 import httpx
 import asyncio
 import json
+import logging
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
 async def main():
-    print("Theben Conexa HTTP Client")
-    print("This is a connection test for the Theben Conexa Smart-Meter Gateway")
-    print("Connect with the HTTPX library (async)")
-    print(f"HTTPX Version: {httpx.__version__}")
+    logging.info("Theben Conexa HTTP Client")
+    logging.info("This is a connection test for the Theben Conexa Smart-Meter Gateway")
+    logging.info("Connect with the HTTPX library (async)")
+    logging.info(f"HTTPX Version: {httpx.__version__}")
 
     load_dotenv()  # .env-Datei laden
 
@@ -33,9 +38,9 @@ async def main():
         'Content-Length': str(body_size)
     }  
 
-    print(f"Using username: {username}")
-    print(f"Using body: {body}")
-    print(f"POST {url}")
+    logging.info(f"Using username: {username}")
+    logging.info(f"Using body: {body}")
+    logging.info(f"POST {url}")
     
     async with httpx.AsyncClient() as client:
         client.headers.update(headers)
@@ -50,11 +55,11 @@ async def main():
             follow_redirects=True
         )
         
-        print(f"Status Code: {response.status_code}")
+        logging.info(f"Status Code: {response.status_code}")
         if response.status_code == 200:
-            print(f"Response: {response.json()}")
+            logging.info(f"Response: {response.json()}")
         else:
-            print(f"Error: {response.text}")
+            logging.info(f"Error: {response.text}")
 
 if __name__ == '__main__':
     # Event-Loop erstellen und main() ausführen
