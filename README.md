@@ -2,9 +2,9 @@
 
 Dieses Repo enthält Code und Dokumentation zur Anfrage des HAN-API des Smart Meter Gateway (SMGW) der Firma Theben. Der Code basiert auf Python.
 
-Die Datei ``theben-conexa_requests.py`` enthält die Abfragen unter Verwendung der Python Bibliothek ``requests``.
+Die Datei [``theben-conexa_requests.py``](/theben-conexa_requets.py) enthält die Abfragen unter Verwendung der Python Bibliothek ``requests``.
 
-Die Datei ``theben-conexa_httpx.py`` enthält die Abfragen unter Verwendung der Python Bibliothek ``httpx``.
+Die Datei [``theben-conexa_httpx.py``](/theben-conexa_httpx.py) enthält die Abfragen unter Verwendung der Python Bibliothek ``httpx``.
 
 Die API-Dokumentation findet man in der [Schnittstellenbeschreibung IF_GW_CON.pdf](https://github.com/klacol/smgw-theben-conexa/blob/main/Schnittstellenbeschreibung%20IF_GW_CON.pdf).
 
