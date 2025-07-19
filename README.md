@@ -8,7 +8,7 @@ Die Datei [``theben-conexa_httpx.py``](/theben-conexa_httpx.py) enthält die Abf
 
 Die API-Dokumentation findet man in der [Schnittstellenbeschreibung IF_GW_CON.pdf](https://github.com/klacol/smgw-theben-conexa/blob/main/Schnittstellenbeschreibung%20IF_GW_CON.pdf).
 
-Zum Laden der Zugangsdaten bitte eine Dazein ``.env`` anlegen und wie folgt befüllen:
+Zum Laden der Zugangsdaten bitte die Datei ``.env`` anlegen und wie folgt befüllen:
 
 ```shell
 CONEXA_IP_ADDRESS=192.168....
