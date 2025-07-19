@@ -1,4 +1,4 @@
-# API für das Theben Conexa Smart Meter Gateway (SMGW)
+# API-Client für das Theben Conexa Smart Meter Gateway (SMGW)
 
 Dieses Repo enthält Code und Dokumentation zur Anfrage des HAN-API des Smart Meter Gateway (SMGW) der Firma Theben. Der Code basiert auf Python.
 
