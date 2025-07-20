@@ -78,8 +78,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     logger = logging.getLogger(__name__)
-    logger.info("Theben Connexa HTTP Client")
-    logger.info("This is a connection test for the Theben Connexa Smart-Meter Gateway")
+    logger.info("Theben Conexa HTTP Client")
+    logger.info("This is a connection test for the Theben Conexa Smart-Meter Gateway")
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug("Debug logging is enabled")
 
@@ -162,7 +162,7 @@ if __name__ == '__main__':
         
         # JSON-Verarbeitung
         response_json = requestsResponse.json()
-        logger.info(f"Firmware Version des Theben Connexa SMGW: {response_json['smgw-info']['firmware-info']['version']}")
+        logger.info(f"Firmware Version des Theben Conexa SMGW: {response_json['smgw-info']['firmware-info']['version']}")
 
     except Exception as e:
         logger.error(f"Error: {e}")
