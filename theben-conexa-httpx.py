@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import httpx
+import ssl
 import asyncio
 import json
 import logging
@@ -24,8 +25,7 @@ async def main():
     password = os.getenv("CONEXA_PASSWORD")
 
     # Request the smgw-info
-    url = f"http://{ip_address}:{port}/smgw/m2m/"
-    url = f"http://{ip_address}:{port}/smgw/m2m/{username}.sm/json"
+    url = f"https://{ip_address}:{port}/smgw/m2m/"
 
     body = {"method" : "smgw-info"}
     # JSON-Body serialisieren, um die exakte Größe zu berechnen
@@ -42,8 +42,16 @@ async def main():
     logging.info(f"Using username: {username}")
     logging.info(f"Using body: {body}")
     logging.info(f"POST {url}")
-    
-    async with httpx.AsyncClient() as client:
+
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    # in httpx v0.28+ use
+    #ssl_context = httpx.SSLContext(verify=False)
+
+    async with httpx.AsyncClient(verify=ssl_context) as client:
+    # in httpx v0.28+ do
+    #async with httpx.AsyncClient(ssl_context=ssl_context) as client:
         client.headers.update(headers)
         
         # await verwenden, um auf das Ergebnis zu warten
@@ -51,8 +59,7 @@ async def main():
             url,
             auth=httpx.DigestAuth(username, password),
             timeout=20,
-            content=json_body.encode('utf-8'),
-            #json=body,
+            json=body,
             follow_redirects=True
         )
         
