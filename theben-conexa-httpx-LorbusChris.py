@@ -90,11 +90,11 @@ async def main():
     json_body = json.dumps(body)
     body_size = len(json_body.encode('utf-8'))  # Anzahl der Bytes im UTF-8-kodierten JSON
     
-      # Headers mit dem berechneten X-Content-Length
+    # Headers mit dem berechneten X-Content-Length
     headers = {
         'Content-Type': 'application/json',
-        'X-Content-Length': str(body_size),
-        'Content-Length': str(body_size)
+        'X-Content-Length': str(body_size)
+        # Content-Length wird automatisch von httpx gesetzt
     }  
 
     logging.info(f"Using username: {username}")
@@ -121,11 +121,13 @@ async def main():
     
     try:
         # await verwenden, um auf das Ergebnis zu warten
+        # Nur eine Methode zum Senden von Daten verwenden (json oder content, nicht beides)
+        logging.debug("Sende POST-Request mit JSON-Daten")
         response = await client.post(
             url,
             auth=httpx.DigestAuth(username, password),
             timeout=20,
-            json=body,
+            json=body,  # Verwende nur json, nicht zusätzlich content
             follow_redirects=True
         )
         
