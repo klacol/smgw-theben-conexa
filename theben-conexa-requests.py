@@ -85,10 +85,10 @@ if __name__ == '__main__':
 
     load_dotenv()  # .env-Datei laden
 
-    ip_address = os.getenv("CONEXA_IP_ADDRESS")
-    port = os.getenv("CONEXA_PORT")
-    username = os.getenv("CONEXA_USERNAME")
-    password = os.getenv("CONEXA_PASSWORD")
+    ip_address = os.getenv("CONEXA_IP_ADDRESS", "")
+    port = os.getenv("CONEXA_PORT", "")
+    username = os.getenv("CONEXA_USERNAME", "")  # Standardwert angeben, um None zu vermeiden
+    password = os.getenv("CONEXA_PASSWORD", "")
 
     logger.info(f"Connecting to {ip_address}:{port}...")
 
@@ -99,9 +99,9 @@ if __name__ == '__main__':
     ### Certificates
     ####################################################
 
-    #cert_file = f"{ip_address}_public_cert.pem"
+    # cert_file = f"{ip_address}_public_cert.pem"
     
-    # Prüfen, ob das Zertifikat bereits existiert
+    # #Prüfen, ob das Zertifikat bereits existiert
     # import os
     # if not os.path.exists(cert_file):
     #     logger.info(f"Zertifikat {cert_file} nicht gefunden. Wird heruntergeladen...")
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     # if result[0]==ip_address:
     #     logger.info(f"DNS-Auflösung erfolgreich: {result[0]}")
     
-    url = f"http://{ip_address}:{port}/smgw/m2m/"
+    url = f"https://{ip_address}:{port}/smgw/m2m/"
 
     headers = {
                 'Content-Type': 'application/json', 
