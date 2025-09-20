@@ -5,11 +5,57 @@ import ssl
 import asyncio
 import json
 import logging
+import subprocess
+import platform
 
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
+
+def ping_host(host, timeout=2):
+    """
+    Überprüft, ob ein Host (IP-Adresse oder Hostname) über PING erreichbar ist.
+    
+    Args:
+        host (str): Der zu überprüfende Host (IP-Adresse oder Hostname)
+        timeout (int): Timeout für den PING-Befehl in Sekunden
+        
+    Returns:
+        tuple: (ping_successful, error_message)
+            - ping_successful (bool): True wenn PING erfolgreich
+            - error_message (str): Fehlermeldung falls vorhanden
+    """
+    ping_successful = False
+    error_message = ""
+    
+    # PING-Erreichbarkeit überprüfen
+    try:
+        # Betriebssystem-spezifischen PING-Befehl ausführen
+        if platform.system().lower() == "windows":
+            # Einfacher Ping-Befehl für Windows
+            command = ["ping", host]
+        else:
+            # Parameter für Linux/Unix/Mac
+            command = ["ping", "-c", "1", f"-W {timeout}", host]
+        
+        logging.info(f"Führe Ping-Befehl aus: {' '.join(command)}")
+        
+        # PING ausführen ohne Textkonvertierung (vermeidet UnicodeDecodeError)
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False)
+        
+        # Erfolgreichen PING erkennen
+        if result.returncode == 0:
+            ping_successful = True
+            logging.info(f"Ping zu {host} erfolgreich!")
+        else:
+            error_message = f"PING nicht erfolgreich. Return Code: {result.returncode}"
+            logging.warning(f"Ping zu {host} fehlgeschlagen. Return Code: {result.returncode}")
+    except Exception as e:
+        error_message = f"Fehler beim PING-Versuch: {e}"
+        logging.error(f"Fehler beim Ping-Versuch: {e}")
+    
+    return ping_successful, error_message
 
 async def main():
     logging.info("Theben Conexa HTTP Client")
@@ -23,6 +69,18 @@ async def main():
     port = int(os.getenv("CONEXA_PORT"))
     username = os.getenv("CONEXA_USERNAME")
     password = os.getenv("CONEXA_PASSWORD")
+
+    # Ping-Test durchführen
+    logging.info(f"Führe Ping-Test zur IP-Adresse {ip_address} durch...")
+    ping_successful, error_message = ping_host(ip_address)
+    
+    if ping_successful:
+        logging.info(f"Ping-Test erfolgreich: {ip_address} ist erreichbar.")
+    else:
+        logging.warning(f"Ping-Test fehlgeschlagen: {ip_address} ist nicht erreichbar.")
+        logging.warning(f"Fehler: {error_message}")
+        logging.warning("Beende das Programm...")
+        return
 
     # Request the smgw-info
     url = f"https://{ip_address}:{port}/smgw/m2m/"
