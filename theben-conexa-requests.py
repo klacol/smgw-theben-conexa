@@ -6,6 +6,10 @@ import socket
 import ssl
 import subprocess
 import platform
+import urllib3
+
+# SSL-Warnungen unterdrücken (Nur für Testumgebungen empfohlen!)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def download_certificate(ip_address, port, output_file):
     context = ssl._create_unverified_context()
@@ -121,7 +125,7 @@ if __name__ == '__main__':
     # if result[0]==ip_address:
     #     logger.info(f"DNS-Auflösung erfolgreich: {result[0]}")
     
-    url = f"https://{ip_address}:{port}/smgw/m2m/"
+    url = f"http://{ip_address}:{port}/smgw/m2m/"
 
     headers = {
                 'Content-Type': 'application/json', 
@@ -145,6 +149,7 @@ if __name__ == '__main__':
         session = requests.Session()
         session.auth = HTTPDigestAuth(username, password)
         #session.verify = cert_file  
+        session.verify = False  # SSL-Verifizierung deaktivieren (Sicherheitsrisiko!)
         session.headers.update(headers) 
         
         # Startzeit messen
