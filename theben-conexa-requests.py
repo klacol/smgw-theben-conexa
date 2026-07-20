@@ -59,12 +59,20 @@ def check_dns_and_ping(hostname, timeout=2):
     # PING-Erreichbarkeit überprüfen
     try:
         # Betriebssystem-spezifischen PING-Befehl ausführen
-        param = "-n" if platform.system().lower() == "windows" else "-c"
-        timeout_param = f"-w {timeout * 1000}" if platform.system().lower() == "windows" else f"-W {timeout}"
-        command = ["ping", param, "1", timeout_param, ip_address]
+        if platform.system().lower() == "windows":
+            command = ["ping", "-n", "1", "-w", str(timeout * 1000), ip_address]
+        else:
+            command = ["ping", "-c", "1", "-W", str(timeout), ip_address]
         
-        # PING ausführen
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # PING ausführen mit korrektem Encoding für Windows
+        result = subprocess.run(
+            command, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE, 
+            text=True,
+            encoding='cp850' if platform.system().lower() == "windows" else 'utf-8',
+            errors='ignore'
+        )
         
         # Erfolgreichen PING erkennen
         if result.returncode == 0:
@@ -93,39 +101,78 @@ if __name__ == '__main__':
     port = os.getenv("CONEXA_PORT", "")
     username = os.getenv("CONEXA_USERNAME", "")  # Standardwert angeben, um None zu vermeiden
     password = os.getenv("CONEXA_PASSWORD", "")
+    
+    # Protokoll automatisch basierend auf Port bestimmen
+    protocol = "https" if port == "443" else "http"
+    logger.info(f"Verwende Protokoll: {protocol} (Port {port})")
 
     logger.info(f"Connecting to {ip_address}:{port}...")
 
+    # PING-Check vor dem eigentlichen Request
+    logger.info(f"Überprüfe Erreichbarkeit von {ip_address}...")
+    resolved_ip, dns_ok, ping_ok, error = check_dns_and_ping(ip_address, timeout=3)
+    
+    if not dns_ok:
+        logger.error(f"DNS-Auflösung fehlgeschlagen: {error}")
+        logger.error("Abbruch: Das Gerät kann nicht erreicht werden.")
+        exit(1)
+    
+    if not ping_ok:
+        logger.warning(f"PING fehlgeschlagen: {error}")
+        logger.warning("Das Gerät antwortet nicht auf PING, versuche trotzdem HTTP-Request...")
+    else:
+        logger.info(f"✓ PING erfolgreich: {ip_address} ist erreichbar")
+    
+    # Merke die aufgelöste IP für den Vergleich
+    target_ip = resolved_ip
 
     # Request the smgw-info
    
     ####################################################
-    ### Certificates
+    ### Certificates (TOFU - Trust On First Use)
     ####################################################
 
-    # cert_file = f"{ip_address}_public_cert.pem"
+    cert_file = f"{target_ip}_public_cert.pem"
+    hostname_to_use = ip_address  # Standardmäßig den konfigurierten Namen verwenden
     
-    # #Prüfen, ob das Zertifikat bereits existiert
-    # import os
-    # if not os.path.exists(cert_file):
-    #     logger.info(f"Zertifikat {cert_file} nicht gefunden. Wird heruntergeladen...")
-    #     download_certificate(ip_address, port, cert_file)
-    #     logger.info(f"Zertifikat wurde heruntergeladen und in {cert_file} gespeichert.")
-    # else:
-    #     logger.info(f"Zertifikat {cert_file} existiert bereits. Kein erneuter Download notwendig.")
+    # Nur bei HTTPS Zertifikat herunterladen und verwenden
+    if protocol == "https":
+        # Prüfen, ob das Zertifikat bereits existiert
+        if not os.path.exists(cert_file):
+            logger.info(f"Zertifikat {cert_file} nicht gefunden. Wird heruntergeladen...")
+            download_certificate(target_ip, int(port), cert_file)
+            logger.info(f"✓ Zertifikat wurde heruntergeladen und in {cert_file} gespeichert.")
+        else:
+            logger.info(f"✓ Zertifikat {cert_file} existiert bereits. Kein erneuter Download notwendig.")
+        
+        # SAN-Name aus Zertifikat extrahieren
+        san = get_cert_san_name(cert_file)
+        logger.info("Zertifikatsanalyse:")
+        logger.info(f"  ✓ SAN-Name im Zertifikat: {san}")
+        logger.info(f"  ℹ Das Zertifikat ist nur für '{san}' gültig")
+        
+        # DNS-Check für den SAN-Namen
+        logger.info(f"Überprüfe DNS-Auflösung für {san}...")
+        san_ip, san_dns_ok, san_ping_ok, san_error = check_dns_and_ping(san, timeout=3)
+        
+        if san_dns_ok and san_ip == target_ip:
+            logger.info(f"✓ DNS-Auflösung erfolgreich: {san} → {san_ip}")
+            if san_ping_ok:
+                logger.info(f"✓ PING über {san} erfolgreich")
+            hostname_to_use = san  # SAN-Namen verwenden
+        else:
+            logger.warning(f"⚠ DNS-Auflösung für {san} fehlgeschlagen oder falsche IP")
+            if san_dns_ok:
+                logger.warning(f"  {san} zeigt auf {san_ip}, erwartet: {target_ip}")
+            logger.warning(f"  Lösung: Eintrag in Windows-Hosts-Datei hinzufügen:")
+            logger.warning(f"  → {target_ip}  {san}")
+            logger.warning(f"  Datei: C:\\Windows\\System32\\drivers\\etc\\hosts")
+            logger.warning(f"  (Benötigt Administrator-Rechte)")
+            logger.warning("")
+            logger.warning(f"  Alternative: DNS-Server-Eintrag: {san} → {target_ip}")
+            logger.warning(f"  Fallback: Verwende {ip_address} ohne Zertifikat-Validierung")
     
-    # san = get_cert_san_name(cert_file)
-    # logger.info("Die Zertifikatsanalyse zeigt:")
-    # logger.info(f"    Das Zertifikat ist gültig für diesen Namen (SAN): {san}")
-    # logger.info("    Das Zertifikat wird nur erfolgreich validiert, wenn der Aufruf über diesen Namen erfolgt.")
-    # logger.info(f"    Daher bitte das Gerät direkt über {san} aufrufen oder einen Alias im DNS-Server einrichten: {san}={ip_address}")
-    
-    # logger.info(f"Überprüfe DNS und PING für {san}...")
-    # result = check_dns_and_ping(san)
-    # if result[0]==ip_address:
-    #     logger.info(f"DNS-Auflösung erfolgreich: {result[0]}")
-    
-    url = f"http://{ip_address}:{port}/smgw/m2m/"
+    url = f"{protocol}://{hostname_to_use}:{port}/smgw/m2m/"
 
     headers = {
                 'Content-Type': 'application/json', 
@@ -148,28 +195,51 @@ if __name__ == '__main__':
         
         session = requests.Session()
         session.auth = HTTPDigestAuth(username, password)
-        #session.verify = cert_file  
-        session.verify = False  # SSL-Verifizierung deaktivieren (Sicherheitsrisiko!)
+        
+        # SSL-Verifizierung mit TOFU-Zertifikat
+        if protocol == "https" and os.path.exists(cert_file):
+            session.verify = cert_file
+            logger.info(f"✓ SSL-Verifizierung aktiv mit {cert_file}")
+        else:
+            session.verify = False  # Fallback: SSL-Verifizierung deaktivieren
+            if protocol == "https":
+                logger.warning("⚠ SSL-Verifizierung deaktiviert (Sicherheitsrisiko!)")
+        
         session.headers.update(headers) 
         
         # Startzeit messen
         start_time = time.time()
         
-        # Request ausführen
-        requestsResponse = session.post(url, json=body)
+        # Request ausführen mit Timeout
+        logger.info("Sende HTTP-Request...")
+        requestsResponse = session.post(url, json=body, timeout=10)
         
         # Endzeit messen und Differenz berechnen
         end_time = time.time()
         execution_time = end_time - start_time
         
-        logger.info(f"Request-Zeit: {execution_time:.3f} Sekunden")
-        logger.info(f"Status Code: {requestsResponse.status_code}")
+        logger.info(f"✓ Request-Zeit: {execution_time:.3f} Sekunden")
+        logger.info(f"✓ Status Code: {requestsResponse.status_code}")
         
         # JSON-Verarbeitung
         response_json = requestsResponse.json()
-        logger.info(f"Firmware Version des Theben Conexa SMGW: {response_json['smgw-info']['firmware-info']['version']}")
+        logger.info(f"✓ Firmware Version des Theben Conexa SMGW: {response_json['smgw-info']['firmware-info']['version']}")
 
+    except requests.exceptions.Timeout:
+        logger.error("Timeout: Das Gerät antwortet nicht innerhalb von 10 Sekunden")
+        logger.error("Mögliche Ursachen:")
+        logger.error("  - Das Gerät ist überlastet oder hängt")
+        logger.error("  - Die Netzwerkverbindung ist sehr langsam")
+        logger.error("  - Der HTTP-Port ist nicht erreichbar")
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Verbindungsfehler: {e}")
+        logger.error("Mögliche Ursachen:")
+        logger.error("  - Das Gerät ist nicht eingeschaltet")
+        logger.error("  - Das Gerät hat eine andere IP-Adresse")
+        logger.error(f"  - Der Port {port} ist nicht offen oder falsch")
+        logger.error("  - Eine Firewall blockiert die Verbindung")
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Unerwarteter Fehler: {e}")
+        logger.error(f"Fehlertyp: {type(e).__name__}")
 
 
