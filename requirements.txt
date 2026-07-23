@@ -1,4 +1,12 @@
-python-dotenv
-httpx
-asyncio
-requests
+# CONEXA 3.0 Client-Bibliothek
+# Python-Abhängigkeiten
+
+# Umgebungsvariablen
+python-dotenv>=1.0.0
+
+# HTTP-Client (requests funktioniert zuverlässig mit Digest-Auth)
+requests>=2.31.0
+urllib3>=1.26.0
+
+# Optional: Für die Konvertierung der PDF-Dokumentation
+markitdown>=0.1.0
